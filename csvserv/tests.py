@@ -1,3 +1,5 @@
+import json
+
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from rest_framework import status
@@ -139,5 +141,145 @@ class CsvTestCase(APITestCase):
                     'No_of_Votes',
                     'Gross']
             }],
+            response.json()
+        )
+
+    def test_files_detail(self):
+        """Test getting file data using sort and filter"""
+        with open('test_file.csv', 'rb') as fp:
+            response = self.client.post(reverse('csvserv:upload'),
+                                        {'file': fp},
+                                        format='multipart')
+        id = response.json().get('id')
+        data = {
+            "sort": {
+                "Released_Year": False,
+                "IMDB_Rating": True
+            },
+            "filter": {
+                "Genre": "Drama",
+                "Meta_score": "77",
+                "Certificate": "R"
+            }
+        }
+        response = self.client.generic(
+            method="GET",
+            path=reverse('csvserv:detail', kwargs={'pk': id}),
+            data=json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(
+            {
+                "id": id,
+                "file_name": "test_file.csv",
+                "file_fields": [
+                    {
+                        "Poster_Link": "https://m.media-amazon.com/images/M/MV5BMTg2NDg3ODg4NF5BMl5BanBnXkFtZTcwNzk3NTc3Nw@@._V1_UY98_CR1,0,67,98_AL_.jpg",
+                        "Series_Title": "Jagten",
+                        "Released_Year": "2012",
+                        "Certificate": "R",
+                        "Runtime": "115 min",
+                        "Genre": "Drama",
+                        "IMDB_Rating": "8.3",
+                        "Overview": "A teacher lives a lonely life, all the while struggling over his son's custody. His life slowly gets better as he finds love and receives good news from his son, but his new luck is about to be brutally shattered by an innocent little lie.",
+                        "Meta_score": "77",
+                        "Director": "Thomas Vinterberg",
+                        "Star1": "Mads Mikkelsen",
+                        "Star2": "Thomas Bo Larsen",
+                        "Star3": "Annika Wedderkopp",
+                        "Star4": "Lasse Fogelstrøm",
+                        "No_of_Votes": "281623",
+                        "Gross": "687,185"
+                    },
+                    {
+                        "Poster_Link": "https://m.media-amazon.com/images/M/MV5BZjk3YThkNDktNjZjMS00MTBiLTllNTAtYzkzMTU0N2QwYjJjXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_UX67_CR0,0,67,98_AL_.jpg",
+                        "Series_Title": "Magnolia",
+                        "Released_Year": "1999",
+                        "Certificate": "R",
+                        "Runtime": "188 min",
+                        "Genre": "Drama",
+                        "IMDB_Rating": "8",
+                        "Overview": "An epic mosaic of interrelated characters in search of love, forgiveness, and meaning in the San Fernando Valley.",
+                        "Meta_score": "77",
+                        "Director": "Paul Thomas Anderson",
+                        "Star1": "Tom Cruise",
+                        "Star2": "Jason Robards",
+                        "Star3": "Julianne Moore",
+                        "Star4": "Philip Seymour Hoffman",
+                        "No_of_Votes": "289742",
+                        "Gross": "22,455,976"
+                    }
+                ]
+            },
+            response.json()
+        )
+
+    def test_files_detail_with_wrong_sort(self):
+        """Test getting data using wrong sort params"""
+        with open('test_file.csv', 'rb') as fp:
+            response = self.client.post(reverse('csvserv:upload'),
+                                        {'file': fp},
+                                        format='multipart')
+        id = response.json().get('id')
+        data = {
+            "sort": {
+                "Released_Year": "qwerty",
+                "IMDB_Rating": True
+            },
+            "filter": {
+                "Genre": "Drama",
+                "Meta_score": "77",
+                "Certificate": "R"
+            }
+        }
+        response = self.client.generic(
+            method="GET",
+            path=reverse('csvserv:detail', kwargs={'pk': id}),
+            data=json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(
+            {
+                'id': id,
+                'file_name': 'test_file.csv',
+                'file_fields': {
+                    'Released_Year': 'value of this field can be only false or true'
+                }
+            },
+            response.json()
+        )
+
+    def test_files_detail_with_wrong_filter(self):
+        """Test getting data using wrong filter params"""
+        with open('test_file.csv', 'rb') as fp:
+            response = self.client.post(reverse('csvserv:upload'),
+                                        {'file': fp},
+                                        format='multipart')
+        id = response.json().get('id')
+        data = {
+            "sort": {
+                "Released_Year": False,
+                "IMDB_Rating": True
+            },
+            "filter": {
+                "GenreQQQ": "Drama",
+                "Meta_score": "77",
+                "Certificate": "R"
+            }
+        }
+        response = self.client.generic(
+            method="GET",
+            path=reverse('csvserv:detail', kwargs={'pk': id}),
+            data=json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(
+            {
+                'id': id,
+                'file_name': 'test_file.csv',
+                'file_fields': {
+                    'GenreQQQ': 'there is not such field in one or in all strings of file'
+                }
+            },
             response.json()
         )

@@ -39,7 +39,7 @@ class DetailCsvSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CsvModel
-        fields = ['file_name', 'file_fields']
+        fields = ['id', 'file_name', 'file_fields']
 
     def get_file_fields(self, instance):
         try:
