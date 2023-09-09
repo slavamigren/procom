@@ -1,8 +1,11 @@
 import json
+import os
 
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from rest_framework import status
+
+from csvserv.models import CsvModel
 from users.models import User
 
 
@@ -90,6 +93,10 @@ class CsvTestCase(APITestCase):
             response = self.client.post(reverse('csvserv:upload'),
                                         {'file': fp},
                                         format='multipart')
+        id = response.json().get('id')
+        file_path = CsvModel.objects.get(pk=id).file.path
+        os.remove(file_path)  # remove the file from filesystem
+
         self.assertEqual(
             response.status_code,
             status.HTTP_201_CREATED
@@ -104,7 +111,6 @@ class CsvTestCase(APITestCase):
         response = self.client.delete(
         reverse('csvserv:delete', kwargs={'pk': response.json().get('id')})
         )
-
         self.assertEqual(
             response.status_code,
             status.HTTP_204_NO_CONTENT
@@ -118,6 +124,9 @@ class CsvTestCase(APITestCase):
                                         format='multipart')
         id = response.json().get('id')
         response = self.client.get(reverse('csvserv:list'))
+
+        file_path = CsvModel.objects.get(pk=id).file.path
+        os.remove(file_path)  # remove the file from filesystem
 
         self.assertEqual(
             [{
@@ -168,6 +177,10 @@ class CsvTestCase(APITestCase):
             data=json.dumps(data),
             content_type='application/json'
         )
+
+        file_path = CsvModel.objects.get(pk=id).file.path
+        os.remove(file_path)  # remove the file from filesystem
+
         self.assertEqual(
             {
                 "id": id,
@@ -238,6 +251,10 @@ class CsvTestCase(APITestCase):
             data=json.dumps(data),
             content_type='application/json'
         )
+
+        file_path = CsvModel.objects.get(pk=id).file.path
+        os.remove(file_path)  # remove the file from filesystem
+
         self.assertEqual(
             {
                 'id': id,
@@ -273,6 +290,10 @@ class CsvTestCase(APITestCase):
             data=json.dumps(data),
             content_type='application/json'
         )
+
+        file_path = CsvModel.objects.get(pk=id).file.path
+        os.remove(file_path)  # remove the file from filesystem
+
         self.assertEqual(
             {
                 'id': id,
